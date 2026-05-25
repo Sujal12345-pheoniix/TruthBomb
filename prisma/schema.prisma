@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents   Document[]
+  geoProjects GeoProject[]
+  aiReports   AiReport[]
+
+  @@map("users")
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  userId       String?
+  fileName     String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  extractedText String? @db.Text
+  status       DocumentStatus @default(PENDING)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  claims Claim[]
+  reports AiReport[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("documents")
+}
+
+enum DocumentStatus {
+  PENDING
+  EXTRACTING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+model Claim {
+  id         String   @id @default(cuid())
+  documentId String
+  claim      String   @db.Text
+  category   ClaimCategory
+  confidence Float    @default(0)
+  context    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  document           Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  verificationResult VerificationResult?
+
+  @@index([documentId])
+  @@index([category])
+  @@map("claims")
+}
+
+enum ClaimCategory {
+  STATISTIC
+  DATE
+  FINANCIAL
+  TECHNICAL
+  SCIENTIFIC
+  GENERAL
+}
+
+model VerificationResult {
+  id              String             @id @default(cuid())
+  claimId         String             @unique
+  status          VerificationStatus
+  confidence      Float              @default(0)
+  reasoning       String             @db.Text
+  correction      String?            @db.Text
+  searchQueries   Json?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  claim            Claim             @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  evidenceSources  EvidenceSource[]
+
+  @@index([status])
+  @@index([confidence])
+  @@map("verification_results")
+}
+
+enum VerificationStatus {
+  VERIFIED
+  FALSE
+  OUTDATED
+  PARTIALLY_TRUE
+  NO_EVIDENCE
+}
+
+model EvidenceSource {
+  id                   String   @id @default(cuid())
+  verificationResultId String
+  title                String
+  url                  String
+  snippet              String   @db.Text
+  source               String
+  relevanceScore       Float    @default(0)
+  publishedAt          String?
+  createdAt            DateTime @default(now())
+
+  verificationResult VerificationResult @relation(fields: [verificationResultId], references: [id], onDelete: Cascade)
+
+  @@index([verificationResultId])
+  @@map("evidence_sources")
+}
+
+model GeoProject {
+  id          String   @id @default(cuid())
+  userId      String?
+  brandName   String
+  websiteUrl  String
+  competitors Json
+  results     Json?
+  visibilityScore Float?
+  status      GeoStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([brandName])
+  @@index([createdAt])
+  @@map("geo_projects")
+}
+
+enum GeoStatus {
+  PENDING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+model AiReport {
+  id         String   @id @default(cuid())
+  userId     String?
+  documentId String?
+  geoProjectId String?
+  title      String
+  summary    String   @db.Text
+  content    Json
+  reportType ReportType
+  createdAt  DateTime @default(now())
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  document Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([reportType])
+  @@index([createdAt])
+  @@map("ai_reports")
+}
+
+enum ReportType {
+  FACT_CHECK
+  GEO_ANALYSIS
+}

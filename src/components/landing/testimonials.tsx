@@ -20,17 +20,17 @@ export function Testimonials() {
   return (
     <section className="py-24">
       <div className="mx-auto max-w-6xl px-6">
-        <h2 className="editorial-heading text-3xl text-stone-900">Trusted by teams</h2>
+        <h2 className="editorial-heading text-3xl text-[#0c2d4d]">Trusted by teams</h2>
         <div className="mt-14 grid gap-8 md:grid-cols-3">
           {quotes.map((q) => (
             <blockquote
               key={q.author}
-              className="flex flex-col justify-between rounded-lg border border-border bg-card p-6"
+              className="flex flex-col justify-between rounded-lg border border-border bg-white/92 p-6 shadow-sm"
             >
-              <p className="text-[15px] leading-relaxed text-stone-700">&ldquo;{q.text}&rdquo;</p>
+              <p className="text-[15px] leading-relaxed text-[#3f6382]">&ldquo;{q.text}&rdquo;</p>
               <footer className="mt-6 border-t border-border pt-4">
-                <p className="text-sm font-medium text-stone-900">{q.author}</p>
-                <p className="text-[13px] text-stone-500">{q.role}</p>
+                <p className="text-sm font-medium text-[#12395f]">{q.author}</p>
+                <p className="text-[13px] text-[#6284a7]">{q.role}</p>
               </footer>
             </blockquote>
           ))}

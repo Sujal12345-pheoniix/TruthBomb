@@ -41,10 +41,10 @@ const features = [
 
 export function FeaturesGrid() {
   return (
-    <section className="border-b border-border py-24">
+    <section className="border-b border-border/70 py-24">
       <div className="mx-auto max-w-6xl px-6">
-        <h2 className="editorial-heading text-3xl text-stone-900">Built for researchers</h2>
-        <p className="mt-3 max-w-xl text-stone-600">
+        <h2 className="editorial-heading text-3xl text-[#0c2d4d]">Built for researchers</h2>
+        <p className="mt-3 max-w-xl text-[#3f6382]">
           Everything you need to verify documents and optimize AI visibility.
         </p>
 
@@ -54,11 +54,11 @@ export function FeaturesGrid() {
             return (
               <div
                 key={f.title}
-                className="group rounded-lg border border-border bg-card p-6 transition-shadow hover:shadow-[0_2px_12px_rgba(0,0,0,0.04)]"
+                className="group rounded-lg border border-border bg-white/92 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(15,53,91,0.12)]"
               >
-                <Icon className="h-5 w-5 text-stone-500" strokeWidth={1.5} />
-                <h3 className="mt-4 text-[15px] font-medium text-stone-900">{f.title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-stone-600">
+                <Icon className="h-5 w-5 text-[#3f6f9d]" strokeWidth={1.5} />
+                <h3 className="mt-4 text-[15px] font-semibold text-[#12395f]">{f.title}</h3>
+                <p className="mt-2 text-[14px] leading-relaxed text-[#456887]">
                   {f.description}
                 </p>
               </div>

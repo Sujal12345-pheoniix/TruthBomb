@@ -104,7 +104,7 @@ function PdfPreviewAnimation() {
     }, 1800);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [steps.length]);
 
   return (
     <motion.div

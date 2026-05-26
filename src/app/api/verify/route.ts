@@ -36,7 +36,17 @@ export async function POST(req: NextRequest) {
     const { documentId } = parsed.data;
 
     // Run the full pipeline — this is the core fact-check workflow
-    const report = await runFactCheckPipeline(documentId);
+    const report = await runFactCheckPipeline(documentId) as unknown as { strictReport?: Record<string, unknown> | null; totalClaims: number; verifiedCount: number; falseCount: number; inaccurateCount: number; claims: unknown[] };
+
+    const url = new URL(req.url);
+    const isStrict = url.searchParams.get("format") === "strict" || body.format === "strict" || body.strict === true;
+
+    if (isStrict) {
+      if (report.strictReport) {
+        return NextResponse.json(report.strictReport);
+      }
+      return NextResponse.json({ error: "Strict report generation failed" }, { status: 500 });
+    }
 
     return NextResponse.json({
       documentId,

@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { chunkText, extractTextFromPdf } from "./pdf";
-import { extractClaims, verifyClaim, generateReportSummary } from "./ai";
+import { extractClaims, verifyClaim } from "./ai";
 import { searchWeb, generateSearchQueries } from "./search";
 import type { ClaimCategory, FactCheckReportContent } from "@/types";
 import type { VerificationStatus } from "@prisma/client";
@@ -91,7 +91,8 @@ export async function runFactCheckPipeline(documentId: string) {
       },
     });
 
-    return await buildReport(documentId);
+    const report = await buildReport(documentId);
+    return { ...report, executiveSummary: "No verifiable claims found.", strictReport: null };
   }
 
   // ── STEP 4: Verify each claim (fault-tolerant) ───────────────────────────
@@ -173,25 +174,146 @@ export async function runFactCheckPipeline(documentId: string) {
   // ── STEP 5: Generate report ──────────────────────────────────────────────
   const report = await buildReport(documentId);
 
+  // Map to strict claim formats for strict JSON report
+  const claimsPayload = report.claims.map((c) => {
+    let strictStatus = "NO EVIDENCE FOUND";
+    if (c.rawStatus === "VERIFIED") strictStatus = "VERIFIED";
+    else if (c.rawStatus === "FALSE") strictStatus = "FALSE";
+    else if (c.rawStatus === "OUTDATED") strictStatus = "OUTDATED";
+    else if (c.rawStatus === "PARTIALLY_TRUE") strictStatus = "PARTIALLY TRUE";
+    else if (c.rawStatus === "NO_EVIDENCE") strictStatus = "NO EVIDENCE FOUND";
+
+    return {
+      claim: c.claim,
+      status: strictStatus,
+      confidence: Math.round(c.confidence * 100),
+      reasoning: c.reasoning,
+      correctedFact: c.correction || "No correction needed.",
+      evidenceSources: c.evidence.map((ev) => ev.url),
+    };
+  });
+
+  const verified = claimsPayload.filter((c) => c.status === "VERIFIED").length;
+  const falseCount = claimsPayload.filter((c) => c.status === "FALSE").length;
+  const partial = claimsPayload.filter((c) => c.status === "PARTIALLY TRUE" || c.status === "OUTDATED").length;
+  const overallTrustScore = Math.round(report.overallConfidence * 100);
+
+  let riskLevel = "LOW";
+  if (falseCount > 0) {
+    riskLevel = falseCount >= 3 ? "CRITICAL" : "HIGH";
+  } else if (partial > 2) {
+    riskLevel = "MEDIUM";
+  }
+
+  const summaryPayload = {
+    totalClaims: report.totalClaims,
+    verified,
+    false: falseCount,
+    partial,
+    overallTrustScore,
+    riskLevel,
+  };
+
+  const llmInput = JSON.stringify({
+    summary: summaryPayload,
+    claims: claimsPayload,
+  });
+
   let executiveSummary = "";
+  let strictReport: Record<string, unknown> | null = null;
+
   try {
-    executiveSummary = await generateReportSummary(
-      JSON.stringify({
-        fileName: doc.fileName,
-        totalClaims: report.totalClaims,
-        verified: report.verifiedCount,
-        inaccurate: report.inaccurateCount,
-        false: report.falseCount,
-        overallConfidence: Math.round(report.overallConfidence * 100),
-        topClaims: report.claims.slice(0, 5).map((c) => ({
-          claim: c.claim.slice(0, 100),
-          status: c.status,
-        })),
-      })
-    );
-  } catch (summaryErr) {
-    console.warn("Executive summary generation failed:", summaryErr);
-    executiveSummary = `Analyzed ${report.totalClaims} claims: ${report.verifiedCount} verified, ${report.inaccurateCount} inaccurate/outdated, ${report.falseCount} false. Overall confidence: ${Math.round(report.overallConfidence * 100)}%.`;
+    const systemPrompt = `You are TruthBomb AI, an advanced fact-verification and misinformation detection system.
+Analyze the fact-check summary and claims list. You must complete the final assessment and generate the Bloomberg-style markdown report.
+
+You MUST return EXACTLY this JSON structure:
+{
+  "finalAssessment": {
+    "majorIssues": ["string"],
+    "aiInsights": "string",
+    "recommendation": "string",
+    "finalVerdict": "string"
+  },
+  "markdownReport": "string"
+}
+
+Guidelines:
+1. "finalAssessment.majorIssues": List 3-5 specific major issues/patterns of misinformation detected (e.g., "Fabricated technology announcements", "Impossible financial statistics").
+2. "finalAssessment.aiInsights": Brief professional assessment of the document's content validity.
+3. "finalAssessment.recommendation": Recommendation on whether the user should trust or share the document.
+4. "finalAssessment.finalVerdict": A single-sentence verdict summarizing the credibility.
+5. "markdownReport": Generate a complete Bloomberg-style markdown report. It must start directly with:
+🔍 CLAIM-BY-CLAIM ANALYSIS
+| Claim | Status | Confidence | AI Verdict |
+| :--- | :--- | :--- | :--- |
+[For every claim in the claims list, add a row. Status emoji map:
+- VERIFIED: ✅ VERIFIED
+- FALSE: ❌ FALSE
+- OUTDATED: ⚠️ OUTDATED
+- PARTIALLY TRUE: ⚠️ PARTIALLY TRUE
+- NO EVIDENCE FOUND: ❓ NO EVIDENCE FOUND]
+[Confidence: percentage, e.g. 97%]
+[AI Verdict: a brief explanation of why the status was assigned]
+
+And follow the table with:
+📊 FINAL ANALYSIS
+🚨 Major Issues Detected
+- [List major issues from finalAssessment.majorIssues]
+
+Do not wrap "markdownReport" inside additional code blocks. Produce a valid JSON response.`;
+
+    const { callLLM } = await import("./ai/llm");
+    const rawLlmResult = await callLLM(systemPrompt, llmInput, { responseFormatJSON: true });
+    
+    let llmParsed: {
+      markdownReport?: string;
+      finalAssessment?: {
+        majorIssues?: string[];
+        aiInsights?: string;
+        recommendation?: string;
+        finalVerdict?: string;
+      };
+    } | null = null;
+    try {
+      llmParsed = JSON.parse(rawLlmResult);
+    } catch {
+      const stripped = rawLlmResult.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+      llmParsed = JSON.parse(stripped);
+    }
+
+    executiveSummary = llmParsed?.markdownReport || "";
+    strictReport = {
+      summary: summaryPayload,
+      claims: claimsPayload,
+      finalAssessment: llmParsed?.finalAssessment || {
+        majorIssues: ["Potential misinformation patterns", "Unverified figures"],
+        aiInsights: "The document contains a mixture of verified facts and false or unverified statistics.",
+        recommendation: "Conduct manual audit for critical decisions.",
+        finalVerdict: "The document's trust score is moderate.",
+      },
+    };
+  } catch (err) {
+    console.error("Strict and Markdown report generation failed:", err);
+    executiveSummary = `🔍 CLAIM-BY-CLAIM ANALYSIS\n\n| Claim | Status | Confidence | AI Verdict |\n| :--- | :--- | :--- | :--- |\n` +
+      claimsPayload.map((c) => {
+        let emoji = "❓";
+        if (c.status === "VERIFIED") emoji = "✅";
+        else if (c.status === "FALSE") emoji = "❌";
+        else if (c.status === "PARTIALLY TRUE" || c.status === "OUTDATED") emoji = "⚠️";
+        return `| ${c.claim} | ${emoji} ${c.status} | ${c.confidence}% | ${c.reasoning} |`;
+      }).join("\n") +
+      `\n\n📊 FINAL ANALYSIS\n🚨 Major Issues Detected\n- Unverified figures and claims detected.`;
+
+    strictReport = {
+      summary: summaryPayload,
+      claims: claimsPayload,
+      finalAssessment: {
+        majorIssues: ["Unverified figures", "Lack of verified source citations"],
+        aiInsights: "Fact-checking pipeline completed with fallback generation.",
+        recommendation: "Exercise caution when citing or distributing these claims.",
+        finalVerdict: `Failed to compile full final assessment. Trust score: ${overallTrustScore}%.`
+      }
+    };
   }
 
   // Upsert the AI report (handle re-runs)
@@ -200,13 +322,19 @@ export async function runFactCheckPipeline(documentId: string) {
     orderBy: { createdAt: "desc" },
   });
 
+  const contentToSave = {
+    ...report,
+    executiveSummary,
+    strictReport,
+  };
+
   if (existingReport) {
     await prisma.aiReport.update({
       where: { id: existingReport.id },
       data: {
         title: `Fact Check: ${doc.fileName}`,
         summary: executiveSummary,
-        content: { ...report, executiveSummary } as object,
+        content: contentToSave as object,
       },
     });
   } else {
@@ -216,7 +344,7 @@ export async function runFactCheckPipeline(documentId: string) {
         title: `Fact Check: ${doc.fileName}`,
         summary: executiveSummary,
         reportType: "FACT_CHECK",
-        content: { ...report, executiveSummary } as object,
+        content: contentToSave as object,
       },
     });
   }
@@ -226,7 +354,7 @@ export async function runFactCheckPipeline(documentId: string) {
     data: { status: "COMPLETED" },
   });
 
-  return { ...report, executiveSummary };
+  return { ...report, executiveSummary, strictReport };
 }
 
 /**
@@ -255,6 +383,7 @@ export async function buildReport(documentId: string): Promise<FactCheckReportCo
       claim: c.claim,
       category: c.category as ClaimCategory,
       status: toReportStatus(vr?.status),
+      rawStatus: vr?.status || undefined,
       confidence: vr?.confidence ?? c.confidence,
       reasoning: vr?.reasoning ?? "Verification pending.",
       correction: vr?.correction ?? undefined,

@@ -54,6 +54,149 @@ function SkeletonReport() {
   );
 }
 
+function renderMarkdownSummary(text: string) {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let tableRows: string[][] = [];
+  let inTable = false;
+  let inList = false;
+  let listItems: React.ReactNode[] = [];
+
+  const flushTable = (key: number) => {
+    if (tableRows.length === 0) return null;
+    const headerRow = tableRows[0];
+    const bodyRows = tableRows.slice(1);
+    
+    const element = (
+      <div key={`table-${key}`} className="my-6 overflow-x-auto rounded-lg border border-border">
+        <table className="w-full border-collapse text-left text-[13px]">
+          <thead>
+            <tr className="bg-[#f0f5fa] border-b border-border font-semibold text-[#113556]">
+              {headerRow.map((cell, idx) => (
+                <th key={idx} className="px-4 py-3 font-medium">
+                  {cell.trim()}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {bodyRows.map((row, rowIdx) => (
+              <tr key={rowIdx} className="hover:bg-slate-50/50 bg-white">
+                {row.map((cell, idx) => {
+                  const content = cell.trim();
+                  let badgeClass = "";
+                  if (content.includes("VERIFIED") || content.includes("✅")) badgeClass = "text-emerald-700 font-semibold";
+                  else if (content.includes("FALSE") || content.includes("❌")) badgeClass = "text-red-700 font-semibold";
+                  else if (content.includes("OUTDATED") || content.includes("PARTIALLY") || content.includes("⚠️")) badgeClass = "text-amber-700 font-semibold";
+
+                  return (
+                    <td key={idx} className={`px-4 py-3 text-[#3f6180] ${badgeClass}`}>
+                      {content}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+    tableRows = [];
+    inTable = false;
+    return element;
+  };
+
+  const flushList = (key: number) => {
+    if (listItems.length === 0) return null;
+    const element = (
+      <ul key={`list-${key}`} className="my-4 list-disc pl-5 space-y-1.5 text-[13.5px] text-[#3f6180]">
+        {listItems}
+      </ul>
+    );
+    listItems = [];
+    inList = false;
+    return element;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+      if (inList) {
+        elements.push(flushList(i));
+      }
+      
+      if (trimmed.includes("---") || trimmed.includes(":-")) {
+        inTable = true;
+        continue;
+      }
+      
+      const cells = trimmed
+        .split("|")
+        .slice(1, -1)
+        .map(c => c.trim());
+      
+      tableRows.push(cells);
+      inTable = true;
+      continue;
+    }
+
+    if (inTable && !trimmed.startsWith("|")) {
+      elements.push(flushTable(i));
+    }
+
+    if (trimmed.startsWith("🔍") || trimmed.startsWith("📊")) {
+      if (inList) elements.push(flushList(i));
+      elements.push(
+        <h2 key={`h2-${i}`} className="mt-8 mb-4 text-[16px] font-bold text-[#0e2746] flex items-center gap-2 border-b border-border pb-2">
+          {trimmed}
+        </h2>
+      );
+      continue;
+    }
+
+    if (trimmed.startsWith("🚨")) {
+      if (inList) elements.push(flushList(i));
+      elements.push(
+        <h3 key={`h3-${i}`} className="mt-6 mb-3 text-[14.5px] font-semibold text-red-800 flex items-center gap-1.5">
+          {trimmed}
+        </h3>
+      );
+      continue;
+    }
+
+    if (trimmed.startsWith("-") || trimmed.startsWith("*")) {
+      inList = true;
+      const content = trimmed.substring(1).trim();
+      listItems.push(<li key={`li-${i}`}>{content}</li>);
+      continue;
+    }
+
+    if (inList && !trimmed.startsWith("-") && !trimmed.startsWith("*") && trimmed.length > 0) {
+      elements.push(flushList(i));
+    }
+
+    if (trimmed.length === 0) {
+      if (inList) elements.push(flushList(i));
+      continue;
+    }
+
+    elements.push(
+      <p key={`p-${i}`} className="my-2.5 text-[14px] leading-relaxed text-[#3f6382]">
+        {trimmed}
+      </p>
+    );
+  }
+
+  if (inTable) elements.push(flushTable(lines.length));
+  if (inList) elements.push(flushList(lines.length));
+
+  return <div className="space-y-1">{elements}</div>;
+}
+
 export default function ReportPage() {
   const params = useParams();
   const router = useRouter();
@@ -187,9 +330,9 @@ export default function ReportPage() {
               {report.fileName}
             </h1>
             {summary && (
-              <p className="mt-4 max-w-2xl text-[14.5px] leading-relaxed text-[#3f6382] border-t border-border/50 pt-4">
-                {summary}
-              </p>
+              <div className="mt-6 max-w-3xl border-t border-border/60 pt-4">
+                {renderMarkdownSummary(summary)}
+              </div>
             )}
           </motion.header>
 

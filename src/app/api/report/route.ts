@@ -6,6 +6,36 @@ import { rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const documentId = searchParams.get("documentId") || searchParams.get("id");
+
+    if (!documentId) {
+      return NextResponse.json({ error: "Missing documentId parameter" }, { status: 400 });
+    }
+
+    const aiReport = await prisma.aiReport.findFirst({
+      where: { documentId, reportType: "FACT_CHECK" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!aiReport) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
+    const content = aiReport.content as unknown as { strictReport?: Record<string, unknown> };
+    if (content?.strictReport) {
+      return NextResponse.json(content.strictReport);
+    }
+
+    return NextResponse.json({ error: "Strict report content not found" }, { status: 404 });
+  } catch (error) {
+    console.error("Report GET error:", error);
+    return NextResponse.json({ error: "Failed to fetch report" }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") ?? "anonymous";
   const { success } = await rateLimit(`report:${ip}`, 20);
@@ -51,6 +81,17 @@ export async function POST(req: NextRequest) {
       where: { documentId, reportType: "FACT_CHECK" },
       orderBy: { createdAt: "desc" },
     });
+
+    const url = new URL(req.url);
+    const isStrict = url.searchParams.get("format") === "strict" || body.format === "strict" || body.strict === true;
+
+    if (isStrict) {
+      const content = aiReport?.content as unknown as { strictReport?: Record<string, unknown> } | null;
+      if (content?.strictReport) {
+        return NextResponse.json(content.strictReport);
+      }
+      return NextResponse.json({ error: "Strict report not generated yet" }, { status: 404 });
+    }
 
     return NextResponse.json({
       report,

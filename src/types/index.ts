@@ -79,6 +79,7 @@ export interface FactCheckReportContent {
     reasoning: string;
     correction?: string;
     evidence: SearchResult[];
+    rawStatus?: string;
   }>;
   executiveSummary: string;
 }

@@ -217,7 +217,7 @@ function PdfPreviewAnimation() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.2, duration: 0.5 }}
-        className="absolute -bottom-4 -right-4 rounded-xl border border-border bg-white px-4 py-3 shadow-lg"
+        className="absolute bottom-2 right-2 sm:-bottom-4 sm:-right-4 rounded-xl border border-border bg-white px-4 py-3 shadow-lg"
       >
         <p className="text-[10.5px] uppercase tracking-wide text-[#687fa0]">Accuracy Score</p>
         <p className="mt-0.5 font-mono text-2xl font-semibold text-[#0e2f54]">

@@ -8,6 +8,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { ClaimCard } from "@/components/report/claim-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FactCheckReportContent } from "@/types";
+import { cn } from "@/lib/utils";
 import { RefreshCw, Download, Share2, CheckCircle2, XCircle, AlertCircle, HelpCircle } from "lucide-react";
 
 function StatCard({
@@ -15,14 +16,16 @@ function StatCard({
   value,
   color,
   icon,
+  className,
 }: {
   label: string;
   value: string | number;
   color: string;
   icon?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white px-4 py-4 shadow-sm">
+    <div className={cn("rounded-xl border border-border bg-white px-4 py-4 shadow-sm", className)}>
       {icon && <div className="mb-2 text-current opacity-70">{icon}</div>}
       <p className="text-[10.5px] uppercase tracking-wider font-semibold text-[#526e8a]">{label}</p>
       <p className={`mt-1.5 font-mono text-2xl font-semibold ${color}`}>{value}</p>
@@ -37,9 +40,10 @@ function SkeletonReport() {
       <Skeleton className="h-10 w-72 mb-4" />
       <Skeleton className="h-20 w-full mb-8" />
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-10">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-20" />
         ))}
+        <Skeleton className="h-20 col-span-2 sm:col-span-1" />
       </div>
       <div className="space-y-5">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -224,6 +228,7 @@ export default function ReportPage() {
               value={`${Math.round(report.overallConfidence * 100)}%`}
               color={accuracyColor}
               icon={<HelpCircle className="h-4 w-4 text-[#7a97b6]" />}
+              className="col-span-2 sm:col-span-1"
             />
           </motion.div>
 

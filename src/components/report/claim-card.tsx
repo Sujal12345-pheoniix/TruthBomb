@@ -1,4 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
+
 
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
@@ -131,20 +133,40 @@ export function ClaimCard({
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
-              {(expanded ? evidence : evidence.slice(0, 2)).map((src) => (
-                <a
-                  key={src.url}
-                  href={src.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group rounded-lg border border-border/80 bg-white p-3 transition-all hover:border-[#a0b8d4] hover:bg-[#f5f9ff] hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="line-clamp-1 text-[12.5px] font-semibold text-[#143b60] group-hover:underline">
-                      {src.title}
-                    </p>
-                    <ExternalLink className="h-3 w-3 shrink-0 text-[#89a4be] mt-0.5" />
-                  </div>
+              {(expanded ? evidence : evidence.slice(0, 2)).map((src) => {
+                let hostname = "";
+                try {
+                  hostname = new URL(src.url).hostname;
+                } catch {
+                  hostname = "";
+                }
+
+                return (
+                  <a
+                    key={src.url}
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group rounded-lg border border-border/80 bg-white p-3 transition-all hover:border-[#a0b8d4] hover:bg-[#f5f9ff] hover:shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {hostname && (
+                          <img
+                            src={`https://www.google.com/s2/favicons?sz=32&domain=${hostname}`}
+                            alt=""
+                            className="h-3.5 w-3.5 rounded shrink-0 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        )}
+                        <p className="line-clamp-1 text-[12.5px] font-semibold text-[#143b60] group-hover:underline">
+                          {src.title}
+                        </p>
+                      </div>
+                      <ExternalLink className="h-3 w-3 shrink-0 text-[#89a4be] mt-0.5" />
+                    </div>
                   <p className="mt-1 truncate font-mono text-[10.5px] text-[#89a4be]">
                     {src.url.replace(/^https?:\/\//, "").slice(0, 50)}
                   </p>
@@ -160,10 +182,11 @@ export function ClaimCard({
                     )}
                   </div>
                 </a>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
         {evidence.length === 0 && (
           <div className="rounded-lg border border-dashed border-border/60 bg-[#f8fbff] px-4 py-3">

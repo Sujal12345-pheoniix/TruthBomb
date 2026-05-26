@@ -61,7 +61,7 @@ export default function FactCheckPage() {
         body: JSON.stringify({ documentId }),
       });
 
-      const data = await readResponseJson(res);
+      const data = (await readResponseJson(res)) as { error?: string; hint?: string };
       clearInterval(interval);
 
       if (!res.ok) {
@@ -94,12 +94,12 @@ export default function FactCheckPage() {
   };
 
 
-async function readResponseJson(response: Response): Promise<any> {
+async function readResponseJson(response: Response): Promise<Record<string, unknown>> {
   const text = await response.text();
   if (!text) return {};
 
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as Record<string, unknown>;
   } catch {
     return { error: text };
   }

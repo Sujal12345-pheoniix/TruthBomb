@@ -43,9 +43,9 @@ export default function GeoPage() {
             .filter(Boolean),
         }),
       });
-        const data = await readResponseJson(res);
+        const data = (await readResponseJson(res)) as { error?: string; results?: GeoAnalysisResult };
       if (!res.ok) throw new Error(data.error ?? "Analysis failed");
-      setResults(data.results);
+      setResults(data.results ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -193,12 +193,12 @@ export default function GeoPage() {
   );
 }
 
-async function readResponseJson(response: Response): Promise<any> {
+async function readResponseJson(response: Response): Promise<Record<string, unknown>> {
   const text = await response.text();
   if (!text) return {};
 
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as Record<string, unknown>;
   } catch {
     return { error: text };
   }

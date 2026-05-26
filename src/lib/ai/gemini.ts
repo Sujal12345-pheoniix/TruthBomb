@@ -172,7 +172,7 @@ export async function generateGeoWithGemini(prompt: string): Promise<string> {
   return geminiGenerate(
     prompt,
     `GEO (Generative Engine Optimization) analyst. Analyze brand AI visibility.
-OUTPUT JSON with fields: visibilityScore (0-100), discoverabilityScore (0-100), summary, aiMentionRankings, competitorAnalysis, geoRecommendations, seoSuggestions, threeMonthStrategy, oneYearRoadmap.`
+OUTPUT JSON with fields: visibilityScore (0-100), discoverabilityScore (0-100), summary, aiMentionRankings, competitorAnalysis, geoRecommendations, seoSuggestions, threeMonthStrategy, oneYearRoadmap.`,
     { maxOutputTokens: 4096, temperature: 0.3 }
   );
 }

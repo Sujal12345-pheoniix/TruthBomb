@@ -63,15 +63,15 @@ export default function GeoPage() {
     <>
       <Header />
       <main className="mx-auto max-w-5xl px-6 py-16">
-        <Link href="/dashboard" className="text-[13px] text-stone-500 hover:text-stone-800">
+        <Link href="/dashboard" className="text-[13px] text-[#5c7a97] hover:text-[#1d476d]">
           ← Dashboard
         </Link>
-        <h1 className="editorial-heading mt-4 text-3xl text-stone-900">GEO Analytics</h1>
-        <p className="mt-2 max-w-xl text-stone-600">
+        <h1 className="editorial-heading mt-4 text-4xl text-[#0b2d4d]">GEO Analytics</h1>
+        <p className="mt-2 max-w-xl text-[#3f6280]">
           Analyze how visible your brand is across ChatGPT, Gemini, Claude, and Perplexity.
         </p>
 
-        <div className="mt-10 rounded-xl border border-border bg-card p-6 space-y-4 max-w-lg">
+        <div className="section-shell mt-10 max-w-lg space-y-4 p-6">
           <div>
             <Label htmlFor="brand">Brand name</Label>
             <Input
@@ -121,38 +121,38 @@ export default function GeoPage() {
         {results && (
           <div className="mt-14 space-y-12">
             <div className="grid gap-6 sm:grid-cols-3">
-              <div className="rounded-lg border border-border bg-card p-5">
-                <p className="text-[11px] uppercase tracking-wide text-stone-500">
+              <div className="rounded-lg border border-border bg-white/90 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-wide text-[#63809d]">
                   Visibility Score
                 </p>
-                <p className="font-mono text-4xl text-stone-900 mt-1">
+                <p className="mt-1 font-mono text-4xl text-[#0f355b]">
                   {Math.round(results.visibilityScore)}
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-card p-5">
-                <p className="text-[11px] uppercase tracking-wide text-stone-500">
+              <div className="rounded-lg border border-border bg-white/90 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-wide text-[#63809d]">
                   Discoverability
                 </p>
-                <p className="font-mono text-4xl text-stone-900 mt-1">
+                <p className="mt-1 font-mono text-4xl text-[#0f355b]">
                   {Math.round(results.discoverabilityScore)}
                 </p>
               </div>
-              <div className="rounded-lg border border-border bg-card p-5 sm:col-span-1">
-                <p className="text-[13px] text-stone-600 leading-relaxed">{results.summary}</p>
+              <div className="rounded-lg border border-border bg-white/90 p-5 shadow-sm sm:col-span-1">
+                <p className="text-[13px] leading-relaxed text-[#3f6382]">{results.summary}</p>
               </div>
             </div>
 
             {chartData.length > 0 && (
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="text-sm font-medium mb-6">AI Mention Rankings</h2>
+              <div className="rounded-xl border border-border bg-white/92 p-6 shadow-sm">
+                <h2 className="mb-6 text-sm font-medium text-[#12395f]">AI Mention Rankings</h2>
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <XAxis dataKey="platform" tick={{ fontSize: 12 }} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                      <XAxis dataKey="platform" tick={{ fontSize: 12, fill: "#5f7c98" }} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#5f7c98" }} />
                       <Bar dataKey="score" radius={[4, 4, 0, 0]}>
                         {chartData.map((_, i) => (
-                          <Cell key={i} fill={i === 0 ? "#292524" : "#a8a29e"} />
+                          <Cell key={i} fill={i === 0 ? "#1f5a95" : "#9cb8d4"} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -164,17 +164,17 @@ export default function GeoPage() {
             <GeoSection title="Competitor Analysis" items={[]}>
               <div className="grid gap-4 md:grid-cols-2">
                 {results.competitorAnalysis.map((c) => (
-                  <div key={c.name} className="rounded-lg border border-border p-4">
+                  <div key={c.name} className="rounded-lg border border-border bg-white/90 p-4">
                     <div className="flex justify-between items-baseline">
-                      <p className="font-medium">{c.name}</p>
-                      <span className="font-mono text-sm">{c.visibilityScore}</span>
+                      <p className="font-medium text-[#12395f]">{c.name}</p>
+                      <span className="font-mono text-sm text-[#2d5377]">{c.visibilityScore}</span>
                     </div>
-                    <p className="mt-2 text-[13px] text-stone-600">
-                      <span className="text-stone-500">Strengths:</span>{" "}
+                    <p className="mt-2 text-[13px] text-[#416583]">
+                      <span className="text-[#63809d]">Strengths:</span>{" "}
                       {c.strengths.join(" · ")}
                     </p>
-                    <p className="mt-1 text-[13px] text-stone-600">
-                      <span className="text-stone-500">Weaknesses:</span>{" "}
+                    <p className="mt-1 text-[13px] text-[#416583]">
+                      <span className="text-[#63809d]">Weaknesses:</span>{" "}
                       {c.weaknesses.join(" · ")}
                     </p>
                   </div>
@@ -204,15 +204,15 @@ function GeoSection({
 }) {
   return (
     <section>
-      <h2 className="text-sm font-medium text-stone-900">{title}</h2>
+      <h2 className="text-sm font-medium text-[#113a60]">{title}</h2>
       {children ?? (
         <ul className="mt-4 space-y-2">
           {items.map((item, i) => (
             <li
               key={i}
-              className="flex gap-3 text-[14px] text-stone-700 border-l border-border pl-4 py-1"
+              className="flex gap-3 border-l border-border py-1 pl-4 text-[14px] text-[#3f6280]"
             >
-              <span className="font-mono text-[11px] text-stone-400 shrink-0">
+              <span className="shrink-0 font-mono text-[11px] text-[#89a4be]">
                 {String(i + 1).padStart(2, "0")}
               </span>
               {item}

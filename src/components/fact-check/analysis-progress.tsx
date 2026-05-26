@@ -24,10 +24,10 @@ export function AnalysisProgress({ currentStep, streamingText }: AnalysisProgres
   const progress = ((currentStep + 1) / PIPELINE_STEPS.length) * 100;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border bg-white/85 p-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-stone-900">Analysis pipeline</p>
-        <span className="font-mono text-[12px] text-stone-500">
+        <p className="text-sm font-semibold text-[#133a5d]">Analysis pipeline</p>
+        <span className="font-mono text-[12px] text-[#5e7b98]">
           Step {Math.min(currentStep + 1, PIPELINE_STEPS.length)} of {PIPELINE_STEPS.length}
         </span>
       </div>
@@ -42,10 +42,10 @@ export function AnalysisProgress({ currentStep, streamingText }: AnalysisProgres
               key={step}
               className={`flex items-center gap-2 text-[13px] ${
                 done
-                  ? "text-stone-500"
+                  ? "text-[#5d7a96]"
                   : active
-                    ? "text-stone-900 font-medium"
-                    : "text-stone-400"
+                    ? "text-[#12395f] font-medium"
+                    : "text-[#8ea4bc]"
               }`}
             >
               {done ? (
@@ -53,7 +53,7 @@ export function AnalysisProgress({ currentStep, streamingText }: AnalysisProgres
               ) : (
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${
-                    active ? "bg-stone-800 animate-pulse" : "bg-stone-200"
+                    active ? "bg-[#1f5a95] animate-pulse" : "bg-[#c7d8ea]"
                   }`}
                 />
               )}
@@ -68,7 +68,7 @@ export function AnalysisProgress({ currentStep, streamingText }: AnalysisProgres
           key={streamingText}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-4 font-mono text-[11px] text-stone-400 border-t border-border pt-4"
+          className="mt-4 border-t border-border pt-4 font-mono text-[11px] text-[#6a839c]"
         >
           {streamingText}
         </motion.p>

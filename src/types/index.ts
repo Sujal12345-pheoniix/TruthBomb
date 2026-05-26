@@ -13,6 +13,8 @@ export type VerificationStatus =
   | "PARTIALLY_TRUE"
   | "NO_EVIDENCE";
 
+export type ReportVerificationStatus = "VERIFIED" | "INACCURATE" | "FALSE";
+
 export interface ExtractedClaim {
   claim: string;
   category: ClaimCategory;
@@ -65,16 +67,14 @@ export interface FactCheckReportContent {
   fileName: string;
   totalClaims: number;
   verifiedCount: number;
+  inaccurateCount: number;
   falseCount: number;
-  outdatedCount: number;
-  partialCount: number;
-  noEvidenceCount: number;
   overallConfidence: number;
   claims: Array<{
     id: string;
     claim: string;
     category: ClaimCategory;
-    status: VerificationStatus;
+    status: ReportVerificationStatus;
     confidence: number;
     reasoning: string;
     correction?: string;

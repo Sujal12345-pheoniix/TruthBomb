@@ -34,8 +34,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const chunk = chunkText(text)[0];
-    const claims = await extractClaims(chunk);
+    const chunks = chunkText(text, 9000).slice(0, 6);
+    const extracted = await Promise.all(chunks.map((chunk) => extractClaims(chunk)));
+    const claims = extracted
+      .flat()
+      .filter((c) => /\d|%|\$|€|£|\b(19|20)\d{2}\b|million|billion|trillion/i.test(c.claim))
+      .filter((c, i, arr) => {
+        const key = c.claim.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+        return arr.findIndex((x) => x.claim.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim() === key) === i;
+      })
+      .slice(0, 20);
+
+    if (claims.length === 0) {
+      return NextResponse.json(
+        { error: "No specific verifiable claims found in this PDF." },
+        { status: 422 }
+      );
+    }
 
     await prisma.claim.deleteMany({ where: { documentId } });
 

@@ -35,7 +35,7 @@ async function geminiGenerate(prompt: string, system?: string): Promise<string> 
 export async function extractClaimsWithGemini(text: string): Promise<ExtractedClaim[]> {
   const content = await geminiGenerate(
     text.slice(0, 10000),
-    `Extract 5-12 verifiable factual claims. Return JSON: { "claims": [{ "claim", "category", "confidence", "context" }] }. Categories: STATISTIC, DATE, FINANCIAL, TECHNICAL, SCIENTIFIC, GENERAL.`
+    `Extract only specific verifiable factual claims. Focus on statistics, dates, financial numbers, and technical figures/specs. Ignore opinions and generic statements. Return strict JSON: { "claims": [{ "claim", "category", "confidence", "context" }] }. Categories: STATISTIC, DATE, FINANCIAL, TECHNICAL, SCIENTIFIC, GENERAL. Provide 6-14 distinct claims maximum.`
   );
 
   if (!content) return [];
@@ -58,7 +58,7 @@ export async function verifyClaimWithGemini(
 
   const content = await geminiGenerate(
     `Claim: "${claim}"\nEvidence:\n${evidenceText}`,
-    `Verify the claim. Return JSON with status (VERIFIED|FALSE|OUTDATED|PARTIALLY_TRUE|NO_EVIDENCE), confidence 0-1, reasoning, correction, searchQueries.`
+    `Verify the claim using only provided evidence. Return JSON with status (VERIFIED|FALSE|OUTDATED|PARTIALLY_TRUE|NO_EVIDENCE), confidence 0-1, reasoning, correction, searchQueries. Use NO_EVIDENCE when support is missing. Use OUTDATED or PARTIALLY_TRUE when values/date context changed.`
   );
 
   if (!content) return null;

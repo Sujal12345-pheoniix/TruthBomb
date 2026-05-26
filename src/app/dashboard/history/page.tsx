@@ -22,32 +22,32 @@ export default function HistoryPage() {
   return (
     <DashboardShell>
       <div className="p-6 lg:p-8 max-w-3xl">
-        <h1 className="editorial-heading text-2xl text-stone-900">Analysis history</h1>
-        <p className="mt-1 text-[14px] text-stone-500">All generated AI reports</p>
+        <h1 className="editorial-heading text-3xl text-[#0c2d4d]">Analysis history</h1>
+        <p className="mt-1 text-[14px] text-[#53708b]">All generated AI reports</p>
 
-        <ul className="mt-8 rounded-lg border border-border divide-y divide-border">
+        <ul className="mt-8 divide-y divide-border rounded-lg border border-border bg-white/90 shadow-sm">
           {loading ? (
             <li className="p-4">
               <Skeleton className="h-12 w-full" />
             </li>
           ) : reports.length ? (
             reports.map((r) => (
-              <li key={r.id} className="px-4 py-3 flex justify-between items-center">
+              <li key={r.id} className="flex items-center justify-between px-4 py-3">
                 <div>
-                  <p className="text-[14px] font-medium">{r.title}</p>
-                  <p className="text-[12px] text-stone-500">
+                  <p className="text-[14px] font-medium text-[#143b60]">{r.title}</p>
+                  <p className="text-[12px] text-[#6a849d]">
                     {r.reportType.replace("_", " ")} · {formatDate(r.createdAt)}
                   </p>
                 </div>
-                <span className="text-[11px] font-mono text-stone-400">{r.id.slice(0, 8)}</span>
+                <span className="text-[11px] font-mono text-[#8ba6bf]">{r.id.slice(0, 8)}</span>
               </li>
             ))
           ) : (
-            <li className="px-4 py-8 text-center text-stone-500 text-[13px]">No reports yet</li>
+            <li className="px-4 py-8 text-center text-[13px] text-[#6284a7]">No reports yet</li>
           )}
         </ul>
 
-        <Link href="/dashboard" className="inline-block mt-6 text-[13px] text-stone-500 hover:text-stone-800">
+        <Link href="/dashboard" className="mt-6 inline-block text-[13px] text-[#5c7a97] hover:text-[#1d476d]">
           ← Overview
         </Link>
       </div>

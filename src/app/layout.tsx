@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Source_Serif_4 } from "next/font/google";
+import { Space_Grotesk, IBM_Plex_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
+const geistSans = Space_Grotesk({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = IBM_Plex_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
-const sourceSerif = Source_Serif_4({
+const sourceSerif = Fraunces({
   variable: "--font-source-serif",
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {

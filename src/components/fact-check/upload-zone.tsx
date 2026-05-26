@@ -49,29 +49,29 @@ export function UploadZone({ onUploaded }: UploadZoneProps) {
     <div
       {...getRootProps()}
       className={cn(
-        "cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition-colors",
+        "cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-200 section-shell",
         isDragActive
-          ? "border-stone-400 bg-stone-50"
-          : "border-border hover:border-stone-300 hover:bg-stone-50/50",
+          ? "border-[#3f7ebf] bg-[#eef5ff]"
+          : "border-border hover:border-[#8fb6df] hover:bg-[#f8fbff]",
         uploading && "pointer-events-none opacity-60"
       )}
     >
       <input {...getInputProps()} />
       {uploading ? (
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-stone-400" />
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#4f79a1]" />
       ) : isDragActive ? (
-        <Upload className="mx-auto h-8 w-8 text-stone-500" />
+        <Upload className="mx-auto h-8 w-8 text-[#1f5a95]" />
       ) : (
-        <FileText className="mx-auto h-8 w-8 text-stone-400" />
+        <FileText className="mx-auto h-8 w-8 text-[#6384a5]" />
       )}
-      <p className="mt-4 text-sm font-medium text-stone-800">
+      <p className="mt-4 text-sm font-semibold text-[#12385a]">
         {uploading
           ? "Uploading…"
           : isDragActive
             ? "Drop PDF here"
             : "Drag & drop a PDF, or click to browse"}
       </p>
-      <p className="mt-1 text-[13px] text-stone-500">PDF only · Max 10MB</p>
+      <p className="mt-1 text-[13px] text-[#6284a7]">PDF only · Max 10MB</p>
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </div>
   );

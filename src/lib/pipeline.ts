@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { extractTextFromPdf } from "./pdf";
+import { chunkText, extractTextFromPdf } from "./pdf";
 import { extractClaims, verifyClaim, generateReportSummary } from "./ai";
 import { searchWeb, generateSearchQueries } from "./search";
 import type { FactCheckReportContent } from "@/types";
@@ -30,7 +30,15 @@ export async function runFactCheckPipeline(documentId: string) {
 
   await prisma.claim.deleteMany({ where: { documentId } });
 
-  const extracted = await extractClaims(text);
+  const extracted = await extractClaimsAcrossChunks(text);
+
+  if (extracted.length === 0) {
+    await prisma.document.update({
+      where: { id: documentId },
+      data: { status: "FAILED" },
+    });
+    throw new Error("No verifiable claims were found in the uploaded PDF text.");
+  }
 
   for (const c of extracted) {
     const claim = await prisma.claim.create({
@@ -45,12 +53,14 @@ export async function runFactCheckPipeline(documentId: string) {
 
     const queries = generateSearchQueries(c.claim);
     const allEvidence = [];
-    for (const q of queries.slice(0, 2)) {
+    for (const q of queries) {
       const results = await searchWeb(q, 4);
       allEvidence.push(...results);
     }
 
-    const uniqueEvidence = dedupeEvidence(allEvidence).slice(0, 6);
+    const uniqueEvidence = dedupeEvidence(allEvidence)
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, 8);
     const verification = await verifyClaim(
       c.claim,
       uniqueEvidence.map((e) => ({
@@ -91,6 +101,7 @@ export async function runFactCheckPipeline(documentId: string) {
     JSON.stringify({
       totalClaims: report.totalClaims,
       verified: report.verifiedCount,
+      inaccurate: report.inaccurateCount,
       false: report.falseCount,
     })
   );
@@ -135,7 +146,7 @@ export async function buildReport(documentId: string): Promise<FactCheckReportCo
       id: c.id,
       claim: c.claim,
       category: c.category,
-      status: (vr?.status ?? "NO_EVIDENCE") as FactCheckReportContent["claims"][0]["status"],
+      status: toReportStatus(vr?.status),
       confidence: vr?.confidence ?? 0,
       reasoning: vr?.reasoning ?? "",
       correction: vr?.correction ?? undefined,
@@ -152,10 +163,8 @@ export async function buildReport(documentId: string): Promise<FactCheckReportCo
 
   const counts = {
     verifiedCount: claims.filter((c) => c.status === "VERIFIED").length,
+    inaccurateCount: claims.filter((c) => c.status === "INACCURATE").length,
     falseCount: claims.filter((c) => c.status === "FALSE").length,
-    outdatedCount: claims.filter((c) => c.status === "OUTDATED").length,
-    partialCount: claims.filter((c) => c.status === "PARTIALLY_TRUE").length,
-    noEvidenceCount: claims.filter((c) => c.status === "NO_EVIDENCE").length,
   };
 
   const overallConfidence =
@@ -172,6 +181,35 @@ export async function buildReport(documentId: string): Promise<FactCheckReportCo
     claims,
     executiveSummary: "",
   };
+}
+
+function toReportStatus(status?: VerificationStatus): FactCheckReportContent["claims"][0]["status"] {
+  if (!status) return "FALSE";
+  if (status === "VERIFIED") return "VERIFIED";
+  if (status === "FALSE" || status === "NO_EVIDENCE") return "FALSE";
+  return "INACCURATE";
+}
+
+async function extractClaimsAcrossChunks(text: string) {
+  const chunks = chunkText(text, 9000).slice(0, 6);
+  const merged = [];
+
+  for (const chunk of chunks) {
+    const claims = await extractClaims(chunk);
+    merged.push(...claims);
+  }
+
+  const seen = new Set<string>();
+  return merged
+    .filter((c) => c.claim?.trim())
+    .filter((c) => {
+      const key = c.claim.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .filter((c) => /\d|%|\$|€|£|\b(19|20)\d{2}\b|million|billion|trillion/i.test(c.claim))
+    .slice(0, 20);
 }
 
 function dedupeEvidence<T extends { url: string }>(items: T[]): T[] {

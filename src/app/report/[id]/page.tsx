@@ -37,8 +37,8 @@ export default function ReportPage() {
 
   return (
     <DashboardShell>
-      <div className="p-6 lg:p-8 max-w-5xl">
-        <Link href="/dashboard" className="text-[13px] text-stone-500 hover:text-stone-800">
+      <div className="max-w-5xl p-6 lg:p-8">
+        <Link href="/dashboard" className="text-[13px] text-[#597692] hover:text-[#1d476d]">
           ← Back to dashboard
         </Link>
 
@@ -50,15 +50,15 @@ export default function ReportPage() {
           </div>
         ) : report ? (
           <>
-            <header className="mt-6 border-b border-border pb-8">
-              <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone-500">
+            <header className="section-shell mt-6 p-7 sm:p-8">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5f7c98]">
                 Fact Check Report
               </p>
-              <h1 className="editorial-heading mt-2 text-2xl text-stone-900 md:text-3xl">
+              <h1 className="editorial-heading mt-2 text-2xl text-[#0b2d4d] md:text-3xl">
                 {report.fileName}
               </h1>
               {summary && (
-                <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-stone-600">
+                <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-[#3f6382]">
                   {summary}
                 </p>
               )}
@@ -68,19 +68,23 @@ export default function ReportPage() {
               {[
                 { label: "Total", value: report.totalClaims },
                 { label: "Verified", value: report.verifiedCount, color: "text-emerald-700" },
+                {
+                  label: "Inaccurate",
+                  value: report.inaccurateCount,
+                  color: "text-amber-700",
+                },
                 { label: "False", value: report.falseCount, color: "text-red-700" },
-                { label: "Outdated", value: report.outdatedCount, color: "text-amber-700" },
                 {
                   label: "Confidence",
                   value: `${Math.round(report.overallConfidence * 100)}%`,
-                  color: "text-stone-900",
+                  color: "text-[#0f355b]",
                 },
               ].map((s) => (
                 <div
                   key={s.label}
-                  className="rounded-lg border border-border bg-card px-4 py-3"
+                  className="rounded-lg border border-border bg-white/90 px-4 py-3 shadow-sm"
                 >
-                  <p className="text-[11px] uppercase tracking-wide text-stone-500">{s.label}</p>
+                  <p className="text-[11px] uppercase tracking-wide text-[#5f7c98]">{s.label}</p>
                   <p className={`mt-1 font-mono text-xl ${s.color ?? ""}`}>{s.value}</p>
                 </div>
               ))}

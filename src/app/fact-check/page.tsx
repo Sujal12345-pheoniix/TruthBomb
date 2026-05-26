@@ -70,16 +70,16 @@ export default function FactCheckPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-16">
-        <div className="mb-10">
+      <main className="mx-auto max-w-4xl px-6 py-14">
+        <div className="mb-10 section-shell p-7 sm:p-9">
           <Link
             href="/dashboard"
-            className="text-[13px] text-stone-500 hover:text-stone-800"
+            className="text-[13px] text-[#54708b] hover:text-[#21486d]"
           >
             ← Dashboard
           </Link>
-          <h1 className="editorial-heading mt-4 text-3xl text-stone-900">Fact Check</h1>
-          <p className="mt-2 text-stone-600">
+          <h1 className="editorial-heading mt-4 text-4xl text-[#0c2d4d]">Fact Check</h1>
+          <p className="mt-3 max-w-2xl text-[#406381]">
             Upload a PDF to extract claims, verify against live sources, and generate a
             research-grade report.
           </p>
@@ -88,11 +88,11 @@ export default function FactCheckPage() {
         {!documentId ? (
           <UploadZone onUploaded={handleUploaded} />
         ) : (
-          <div className="space-y-6">
-            <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center justify-between">
+          <div className="space-y-6 section-shell p-6 sm:p-7">
+            <div className="rounded-lg border border-border bg-white/85 px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">{fileName}</p>
-                <p className="text-[12px] text-stone-500 font-mono">{documentId}</p>
+                <p className="text-sm font-semibold text-[#113556]">{fileName}</p>
+                <p className="text-[12px] text-[#6a839c] font-mono">{documentId}</p>
               </div>
               {!analyzing && (
                 <Button variant="ghost" size="sm" onClick={() => setDocumentId(null)}>

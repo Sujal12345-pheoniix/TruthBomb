@@ -16,10 +16,16 @@ export async function extractClaimsWithOpenAI(text: string): Promise<ExtractedCl
     messages: [
       {
         role: "system",
-        content: `You are a fact-checking analyst. Extract verifiable factual claims from document text.
-Categories: STATISTIC, DATE, FINANCIAL, TECHNICAL, SCIENTIFIC, GENERAL.
-Return JSON: { "claims": [{ "claim": string, "category": string, "confidence": 0-1, "context": string }] }
-Extract 5-12 distinct, specific claims. Focus on numbers, dates, and assertions that can be verified online.`,
+        content: `You are a fact-checking analyst.
+      Extract only specific, verifiable claims from the provided document text.
+      Priority: statistics, dates, financial figures, technical metrics/specifications.
+      Rules:
+      - Ignore opinions, recommendations, and vague statements.
+      - Keep each claim atomic and self-contained.
+      - Prefer claims with concrete values (numbers, percentages, years, currency, units).
+      Categories: STATISTIC, DATE, FINANCIAL, TECHNICAL, SCIENTIFIC, GENERAL.
+      Return strict JSON: { "claims": [{ "claim": string, "category": string, "confidence": 0-1, "context": string }] }
+      Extract 6-14 distinct claims maximum.`,
       },
       {
         role: "user",
@@ -61,8 +67,14 @@ export async function verifyClaimWithOpenAI(
     messages: [
       {
         role: "system",
-        content: `You verify factual claims using web evidence. Status must be one of:
-VERIFIED, FALSE, OUTDATED, PARTIALLY_TRUE, NO_EVIDENCE.
+        content: `You verify factual claims using only the provided web evidence.
+      Status must be one of: VERIFIED, FALSE, OUTDATED, PARTIALLY_TRUE, NO_EVIDENCE.
+      Decision policy:
+      - VERIFIED: evidence directly supports the claim with matching values/date context.
+      - OUTDATED or PARTIALLY_TRUE: evidence partially matches but indicates changed values/date/version.
+      - FALSE: evidence directly contradicts the claim.
+      - NO_EVIDENCE: no reliable supporting evidence is found in provided sources.
+      If evidence quality is weak, avoid over-claiming certainty.
 Return JSON: {
   "status": string,
   "confidence": 0-1,

@@ -14,13 +14,13 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-[#f7fbff]/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2.5 group">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-stone-900 text-[11px] font-semibold tracking-tight text-stone-50">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-[#0f355b] to-[#1d6bb8] text-[11px] font-semibold tracking-tight text-white shadow-sm">
             FX
           </span>
-          <span className="text-[15px] font-medium tracking-tight text-stone-900">
+          <span className="text-[15px] font-semibold tracking-tight text-[#102b44]">
             FactCheckX
           </span>
         </Link>
@@ -34,8 +34,8 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
                 className={cn(
                   "rounded-md px-3 py-1.5 text-[13px] transition-colors",
                   pathname.startsWith(item.href)
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-white text-[#103558] shadow-sm"
+                    : "text-muted-foreground hover:bg-white/75 hover:text-foreground"
                 )}
               >
                 {item.label}
@@ -47,13 +47,13 @@ export function Header({ minimal = false }: { minimal?: boolean }) {
         <div className="flex items-center gap-2">
           <Link
             href="/fact-check"
-            className="hidden rounded-md border border-border px-3 py-1.5 text-[13px] text-stone-600 transition-colors hover:bg-muted sm:inline-flex"
+            className="hidden rounded-md border border-border bg-white/70 px-3 py-1.5 text-[13px] text-[#365676] transition-colors hover:bg-white sm:inline-flex"
           >
             Upload PDF
           </Link>
           <Link
             href="/dashboard"
-            className="rounded-md bg-stone-900 px-3 py-1.5 text-[13px] font-medium text-stone-50 transition-colors hover:bg-stone-800"
+            className="rounded-md bg-gradient-to-r from-[#123a61] to-[#1f6ab2] px-3 py-1.5 text-[13px] font-medium text-white transition-all hover:-translate-y-0.5"
           >
             Open Dashboard
           </Link>

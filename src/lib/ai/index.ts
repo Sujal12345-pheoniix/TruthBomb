@@ -79,16 +79,20 @@ export { generateReportSummary };
 
 function fallbackExtractClaims(text: string): ExtractedClaim[] {
   const sentences = text
+    .replace(/\s+/g, " ")
     .split(/[.!?]+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 40 && /\d/.test(s))
-    .slice(0, 8);
+    .filter((s) => s.length >= 50 && s.length <= 320)
+    .filter((s) => /\d|%|\$|€|£|million|billion|trillion|\b(19|20)\d{2}\b/i.test(s));
 
-  return sentences.map((s, i) => ({
-    claim: s,
-    category: "GENERAL" as const,
-    confidence: 0.6 + (i % 3) * 0.1,
-  }));
+  return dedupeClaims(sentences)
+    .slice(0, 12)
+    .map((claim) => ({
+      claim,
+      category: inferCategory(claim),
+      confidence: 0.62,
+      context: claim,
+    }));
 }
 
 function fallbackVerify(
@@ -107,10 +111,10 @@ function fallbackVerify(
     const matches = keywords.filter((k) => snippets.includes(k)).length;
     if (matches >= 3) {
       status = "VERIFIED";
-      confidence = 0.75;
+      confidence = 0.72;
     } else if (matches >= 1) {
-      status = "PARTIALLY_TRUE";
-      confidence = 0.55;
+      status = "OUTDATED";
+      confidence = 0.56;
     } else {
       status = "NO_EVIDENCE";
       confidence = 0.4;
@@ -126,6 +130,36 @@ function fallbackVerify(
     searchQueries: [],
     evidence: [],
   };
+}
+
+function dedupeClaims(claims: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const claim of claims) {
+    const key = claim.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(claim);
+  }
+
+  return result;
+}
+
+function inferCategory(claim: string): ExtractedClaim["category"] {
+  if (/\b(19|20)\d{2}\b|\bjan\b|\bfeb\b|\bmar\b|\bapr\b|\bmay\b|\bjun\b|\bjul\b|\baug\b|\bsep\b|\boct\b|\bnov\b|\bdec\b/i.test(claim)) {
+    return "DATE";
+  }
+  if (/\$|€|£|revenue|profit|valuation|market cap|funding|cost|budget|usd|eur|gbp/i.test(claim)) {
+    return "FINANCIAL";
+  }
+  if (/\bapi\b|\bmodel\b|\bversion\b|\bsoftware\b|\bhardware\b|\bchip\b|\balgorithm\b|\blatency\b|\baccuracy\b/i.test(claim)) {
+    return "TECHNICAL";
+  }
+  if (/\d|%|million|billion|trillion/i.test(claim)) {
+    return "STATISTIC";
+  }
+  return "GENERAL";
 }
 
 function fallbackGeo(

@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #fafaf9;
-  --color-foreground: #1c1917;
-  --color-muted: #f5f5f4;
-  --color-muted-foreground: #78716c;
-  --color-border: #e7e5e4;
-  --color-accent: #292524;
-  --color-accent-foreground: #fafaf9;
+  --color-background: #f4f7fb;
+  --color-foreground: #0f2338;
+  --color-muted: #e9eff7;
+  --color-muted-foreground: #57728e;
+  --color-border: #cfdceb;
+  --color-accent: #ff6b35;
+  --color-accent-foreground: #fff6f2;
   --color-card: #ffffff;
-  --color-card-foreground: #1c1917;
-  --color-primary: #1c1917;
-  --color-primary-foreground: #fafaf9;
-  --color-secondary: #f5f5f4;
-  --color-secondary-foreground: #44403c;
-  --color-destructive: #b91c1c;
-  --color-success: #15803d;
-  --color-warning: #a16207;
+  --color-card-foreground: #16324f;
+  --color-primary: #0f355b;
+  --color-primary-foreground: #f2f8ff;
+  --color-secondary: #dce8f6;
+  --color-secondary-foreground: #2b4a67;
+  --color-destructive: #c13d3d;
+  --color-success: #14825a;
+  --color-warning: #b7791f;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-serif: var(--font-source-serif), Georgia, serif;
@@ -36,11 +36,17 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgb(255 107 53 / 0.1), transparent 30%),
+      radial-gradient(circle at 85% 15%, rgb(17 93 173 / 0.14), transparent 35%),
+      linear-gradient(180deg, #f7fbff 0%, #eef4fb 100%);
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
   }
 
   ::selection {
-    @apply bg-stone-200 text-stone-900;
+    background-color: rgb(255 107 53 / 0.25);
+    color: #082742;
   }
 }
 
@@ -51,13 +57,34 @@
 
   .editorial-heading {
     font-family: var(--font-serif);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
 
   .grid-pattern {
     background-image:
-      linear-gradient(to right, rgb(0 0 0 / 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(0 0 0 / 0.03) 1px, transparent 1px);
+      linear-gradient(to right, rgb(15 53 91 / 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(15 53 91 / 0.06) 1px, transparent 1px);
     background-size: 48px 48px;
+  }
+
+  .glass-panel {
+    background: linear-gradient(145deg, rgb(255 255 255 / 0.88), rgb(255 255 255 / 0.72));
+    border: 1px solid rgb(207 220 235 / 0.85);
+    backdrop-filter: blur(10px);
+  }
+
+  .section-shell {
+    border: 1px solid rgb(207 220 235 / 0.9);
+    border-radius: 1rem;
+    background: linear-gradient(160deg, rgb(255 255 255 / 0.95), rgb(247 251 255 / 0.85));
+    box-shadow:
+      0 16px 40px rgb(11 40 66 / 0.06),
+      inset 0 1px 0 rgb(255 255 255 / 0.5);
+  }
+
+  .ambient-ring {
+    box-shadow:
+      0 0 0 1px rgb(17 93 173 / 0.12),
+      0 14px 30px rgb(17 93 173 / 0.12);
   }
 }

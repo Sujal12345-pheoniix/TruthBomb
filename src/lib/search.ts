@@ -128,10 +128,12 @@ async function searchExa(query: string, maxResults: number): Promise<SearchResul
 }
 
 export function generateSearchQueries(claim: string): string[] {
-  const base = claim.replace(/[^\w\s]/g, " ").trim().slice(0, 120);
+  const base = claim.replace(/[^\w\s%$€£.-]/g, " ").replace(/\s+/g, " ").trim();
+  const short = base.slice(0, 110);
+
   return [
-    base,
-    `"${base.slice(0, 80)}" fact check`,
-    `${base.slice(0, 60)} statistics verified`,
-  ].slice(0, 3);
+    `"${short}"`,
+    `${short} official report data`,
+    `${short} statistics year source`,
+  ].map((q) => q.trim());
 }

@@ -1,18 +1,46 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import type { ReportVerificationStatus } from "@/types";
+import { useState } from "react";
 
-const statusVariant: Record<
-  ReportVerificationStatus,
-  "verified" | "falsified" | "inaccurate"
-> = {
-  VERIFIED: "verified",
-  FALSE: "falsified",
-  INACCURATE: "inaccurate",
-};
+// Map all possible verdict types to badge variants
+function getVariant(status: ReportVerificationStatus): "verified" | "falsified" | "inaccurate" | "outdated" | "partial" | "noevidence" {
+  switch (status) {
+    case "VERIFIED": return "verified";
+    case "FALSE": return "falsified";
+    case "INACCURATE": return "inaccurate";
+    default: return "noevidence";
+  }
+}
+
+function getStatusLabel(status: ReportVerificationStatus): string {
+  switch (status) {
+    case "VERIFIED": return "✓ Verified";
+    case "FALSE": return "✗ False";
+    case "INACCURATE": return "~ Inaccurate";
+    default: return "? No Evidence";
+  }
+}
+
+function getStatusBorderColor(status: ReportVerificationStatus): string {
+  switch (status) {
+    case "VERIFIED": return "border-l-emerald-400";
+    case "FALSE": return "border-l-red-400";
+    case "INACCURATE": return "border-l-amber-400";
+    default: return "border-l-slate-300";
+  }
+}
+
+function getConfidenceColor(status: ReportVerificationStatus): string {
+  switch (status) {
+    case "VERIFIED": return "bg-emerald-500";
+    case "FALSE": return "bg-red-500";
+    case "INACCURATE": return "bg-amber-500";
+    default: return "bg-slate-400";
+  }
+}
 
 interface ClaimCardProps {
   claim: string;
@@ -21,7 +49,7 @@ interface ClaimCardProps {
   confidence: number;
   reasoning: string;
   correction?: string;
-  evidence: Array<{ title: string; url: string; snippet: string; source: string }>;
+  evidence: Array<{ title: string; url: string; snippet: string; source: string; publishedAt?: string }>;
 }
 
 export function ClaimCard({
@@ -33,69 +61,116 @@ export function ClaimCard({
   correction,
   evidence,
 }: ClaimCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const confPct = Math.round(confidence * 100);
+
   return (
-    <article className="overflow-hidden rounded-lg border border-border bg-white/92 shadow-sm">
-      <div className="border-b border-border bg-[#f4f9ff] px-5 py-4">
+    <article
+      className={`overflow-hidden rounded-xl border border-border bg-white shadow-sm border-l-4 ${getStatusBorderColor(status)}`}
+    >
+      {/* Header */}
+      <div className="bg-[#f7fbff] px-5 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <p className="max-w-2xl text-[15px] leading-snug text-[#12375a]">{claim}</p>
-          <Badge variant={statusVariant[status]}>{status.replace("_", " ")}</Badge>
+          <p className="max-w-2xl text-[14.5px] leading-snug font-medium text-[#0e2746]">{claim}</p>
+          <Badge variant={getVariant(status)}>{getStatusLabel(status)}</Badge>
         </div>
-        <div className="mt-3 flex items-center gap-4">
-          <span className="text-[11px] uppercase tracking-wide text-[#63809d]">{category}</span>
-          <div className="flex max-w-50 flex-1 items-center gap-2">
-            <Progress value={confidence * 100} className="flex-1" />
-            <span className="font-mono text-[11px] text-[#5f7c98]">
-              {Math.round(confidence * 100)}%
-            </span>
+
+        {/* Metadata row */}
+        <div className="mt-3 flex flex-wrap items-center gap-4">
+          <span className="rounded-full bg-[#e8eef8] px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-[#4a6882]">
+            {category}
+          </span>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-28 overflow-hidden rounded-full bg-[#d9e6f4]">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${getConfidenceColor(status)}`}
+                style={{ width: `${confPct}%` }}
+              />
+            </div>
+            <span className="font-mono text-[11px] text-[#5f7c98]">{confPct}% confidence</span>
           </div>
         </div>
       </div>
 
+      {/* Body */}
       <div className="px-5 py-4 space-y-4">
+        {/* Reasoning */}
         <div>
-          <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#64819d]">
+          <p className="mb-1 text-[10.5px] font-semibold uppercase tracking-wider text-[#64819d]">
             AI Reasoning
           </p>
-          <p className="text-[14px] leading-relaxed text-[#3f6180]">{reasoning}</p>
+          <p className="text-[13.5px] leading-relaxed text-[#3d6080]">{reasoning}</p>
         </div>
 
+        {/* Correction box */}
         {correction && (
-          <div className="rounded-md border-l-2 border-amber-400 bg-amber-50/50 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-amber-800 mb-1">
-              Suggested correction
+          <div className="rounded-lg border-l-2 border-amber-400 bg-amber-50/60 px-4 py-3">
+            <p className="text-[10.5px] font-semibold uppercase tracking-wider text-amber-800 mb-1.5">
+              ⚡ Suggested Correction
             </p>
-            <p className="text-[14px] text-amber-900">{correction}</p>
+            <p className="text-[13.5px] text-amber-900 leading-relaxed">{correction}</p>
           </div>
         )}
 
+        {/* Evidence sources */}
         {evidence.length > 0 && (
           <div>
-            <p className="mb-3 text-[11px] font-medium uppercase tracking-wide text-[#64819d]">
-              Sources ({evidence.length})
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10.5px] font-semibold uppercase tracking-wider text-[#64819d]">
+                Evidence Sources ({evidence.length})
+              </p>
+              {evidence.length > 2 && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="flex items-center gap-1 text-[11px] text-[#5278a0] hover:text-[#0e2f54] transition-colors"
+                >
+                  {expanded ? "Show less" : `Show all ${evidence.length}`}
+                  {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </button>
+              )}
+            </div>
+
             <div className="grid gap-2 sm:grid-cols-2">
-              {evidence.slice(0, 4).map((src) => (
+              {(expanded ? evidence : evidence.slice(0, 2)).map((src) => (
                 <a
                   key={src.url}
                   href={src.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group rounded-md border border-border bg-white p-3 transition-colors hover:bg-[#f5f9ff]"
+                  className="group rounded-lg border border-border/80 bg-white p-3 transition-all hover:border-[#a0b8d4] hover:bg-[#f5f9ff] hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="line-clamp-1 text-[13px] font-medium text-[#143b60] group-hover:underline">
+                    <p className="line-clamp-1 text-[12.5px] font-semibold text-[#143b60] group-hover:underline">
                       {src.title}
                     </p>
-                    <ExternalLink className="h-3 w-3 shrink-0 text-[#89a4be]" />
+                    <ExternalLink className="h-3 w-3 shrink-0 text-[#89a4be] mt-0.5" />
                   </div>
-                  <p className="mt-1 truncate font-mono text-[11px] text-[#89a4be]">{src.url}</p>
-                  <p className="mt-2 line-clamp-2 text-[12px] text-[#4a6b89]">{src.snippet}</p>
-                  <span className="mt-2 inline-block text-[10px] uppercase text-[#89a4be]">
-                    via {src.source}
-                  </span>
+                  <p className="mt-1 truncate font-mono text-[10.5px] text-[#89a4be]">
+                    {src.url.replace(/^https?:\/\//, "").slice(0, 50)}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-[12px] text-[#4a6b89] leading-relaxed">
+                    {src.snippet}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="inline-block rounded px-1.5 py-0.5 text-[9.5px] uppercase font-semibold tracking-wide bg-[#eef4fb] text-[#5278a0]">
+                      {src.source}
+                    </span>
+                    {src.publishedAt && (
+                      <span className="text-[9.5px] text-[#89a4be]">{src.publishedAt}</span>
+                    )}
+                  </div>
                 </a>
               ))}
             </div>
+          </div>
+        )}
+
+        {evidence.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border/60 bg-[#f8fbff] px-4 py-3">
+            <p className="text-[12px] text-[#7a97b6]">
+              No web sources were found for this claim. This may indicate the claim is too specific,
+              uses proprietary data, or the search returned no relevant results.
+            </p>
           </div>
         )}
       </div>

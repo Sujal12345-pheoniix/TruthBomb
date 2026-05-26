@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-6 py-14">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div>
-            <p className="text-[15px] font-semibold text-[#12395f]">FactCheckX</p>
+            <p className="text-[15px] font-bold text-[#0d1f32]">Truth<span className="text-[#e8460a]">Bomb</span></p>
             <p className="mt-2 max-w-xs text-[14px] text-[#5f7c98]">
               AI-powered fact verification and GEO intelligence for modern brands.
             </p>
@@ -31,7 +31,7 @@ export function Footer() {
           </div>
         </div>
         <p className="mt-12 text-[12px] text-[#7d95ad]">
-          © {new Date().getFullYear()} FactCheckX. Built for deployment on Vercel + Neon.
+          © {new Date().getFullYear()} TruthBomb. Powered by OpenAI, Tavily, and Neon PostgreSQL.
         </p>
       </div>
     </footer>

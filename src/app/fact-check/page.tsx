@@ -61,7 +61,7 @@ export default function FactCheckPage() {
         body: JSON.stringify({ documentId }),
       });
 
-      const data = await res.json();
+      const data = await readResponseJson(res);
       clearInterval(interval);
 
       if (!res.ok) {
@@ -93,6 +93,17 @@ export default function FactCheckPage() {
     }
   };
 
+
+async function readResponseJson(response: Response): Promise<any> {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text };
+  }
+}
   const reset = () => {
     setDocumentId(null);
     setFileName(null);

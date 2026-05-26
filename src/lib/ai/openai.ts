@@ -201,6 +201,7 @@ export async function generateGeoAnalysis(prompt: string): Promise<string> {
       model: "gpt-4o-mini",
       temperature: 0.4,
       response_format: { type: "json_object" },
+      max_tokens: 2000,
       messages: [
         {
           role: "system",
@@ -246,7 +247,7 @@ export async function generateReportSummary(content: string): Promise<string> {
     const response = await c.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 900,
       messages: [
         {
           role: "system",

@@ -43,7 +43,7 @@ export default function GeoPage() {
             .filter(Boolean),
         }),
       });
-      const data = await res.json();
+        const data = await readResponseJson(res);
       if (!res.ok) throw new Error(data.error ?? "Analysis failed");
       setResults(data.results);
     } catch (e) {
@@ -191,6 +191,17 @@ export default function GeoPage() {
       </main>
     </>
   );
+}
+
+async function readResponseJson(response: Response): Promise<any> {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text };
+  }
 }
 
 function GeoSection({

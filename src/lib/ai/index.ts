@@ -3,12 +3,13 @@ import {
   extractClaimsWithOpenAI,
   verifyClaimWithOpenAI,
   generateGeoAnalysis,
-  generateReportSummary,
+  generateReportSummary as generateReportSummaryWithOpenAI,
 } from "./openai";
 import {
   extractClaimsWithGemini,
   verifyClaimWithGemini,
   generateGeoWithGemini,
+  generateReportSummaryWithGemini,
 } from "./gemini";
 import { hasOpenAI, hasGemini } from "../env";
 
@@ -56,26 +57,62 @@ Competitors: ${competitors.join(", ")}
 
 Assess visibility across ChatGPT, Gemini, Claude, and Perplexity. Provide realistic scores and strategies.`;
 
-  let raw = "{}";
-  try {
-    if (hasOpenAI()) {
-      raw = await generateGeoAnalysis(prompt);
-    } else if (hasGemini()) {
-      raw = await generateGeoWithGemini(prompt);
+  const providers: Array<() => Promise<string>> = [];
+
+  if (hasOpenAI()) providers.push(() => generateGeoAnalysis(prompt));
+  if (hasGemini()) providers.push(() => generateGeoWithGemini(prompt));
+
+  for (const provider of providers) {
+    try {
+      const raw = await provider();
+      const parsed = safeParseJSON<Partial<GeoAnalysisResult>>(raw);
+      if (parsed) {
+        return normalizeGeoResult(parsed, brandName, competitors);
+      }
+    } catch (error) {
+      console.warn("GEO provider failed:", error);
     }
-  } catch {
-    raw = "{}";
   }
 
-  try {
-    const parsed = JSON.parse(raw) as GeoAnalysisResult;
-    return normalizeGeoResult(parsed, brandName, competitors);
-  } catch {
-    return fallbackGeo(brandName, websiteUrl, competitors);
-  }
+  return fallbackGeo(brandName, websiteUrl, competitors);
 }
 
-export { generateReportSummary };
+export async function generateReportSummary(content: string): Promise<string> {
+  if (hasOpenAI()) {
+    const summary = (await generateReportSummaryWithOpenAI(content)).trim();
+    if (summary) return summary;
+  }
+
+  if (hasGemini()) {
+    const summary = (await generateReportSummaryWithGemini(content)).trim();
+    if (summary) return summary;
+  }
+
+  return "Analysis complete. Review individual claim verifications below for detailed findings.";
+}
+
+function safeParseJSON<T>(text: string): T | null {
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    try {
+      const stripped = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+      return JSON.parse(stripped) as T;
+    } catch {
+      const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+      if (match) {
+        try {
+          return JSON.parse(match[0]) as T;
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    }
+  }
+}
 
 function fallbackExtractClaims(text: string): ExtractedClaim[] {
   const sentences = text

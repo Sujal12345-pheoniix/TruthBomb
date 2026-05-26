@@ -41,7 +41,11 @@ function safeParseJSON<T>(text: string): T | null {
   }
 }
 
-async function geminiGenerate(prompt: string, system?: string): Promise<string> {
+async function geminiGenerate(
+  prompt: string,
+  system?: string,
+  options?: { maxOutputTokens?: number; temperature?: number }
+): Promise<string> {
   if (!hasGemini()) return "";
 
   const controller = new AbortController();
@@ -63,9 +67,9 @@ async function geminiGenerate(prompt: string, system?: string): Promise<string> 
           },
         ],
         generationConfig: {
-          temperature: 0.2,
+          temperature: options?.temperature ?? 0.2,
           responseMimeType: "application/json",
-          maxOutputTokens: 2048,
+          maxOutputTokens: options?.maxOutputTokens ?? 4096,
         },
       }),
       signal: controller.signal,
@@ -169,6 +173,15 @@ export async function generateGeoWithGemini(prompt: string): Promise<string> {
     prompt,
     `GEO (Generative Engine Optimization) analyst. Analyze brand AI visibility.
 OUTPUT JSON with fields: visibilityScore (0-100), discoverabilityScore (0-100), summary, aiMentionRankings, competitorAnalysis, geoRecommendations, seoSuggestions, threeMonthStrategy, oneYearRoadmap.`
+    { maxOutputTokens: 4096, temperature: 0.3 }
+  );
+}
+
+export async function generateReportSummaryWithGemini(content: string): Promise<string> {
+  return geminiGenerate(
+    content,
+    `Write a concise professional executive summary (3-4 sentences) for a fact-check report. Mention the document, key findings, and overall credibility assessment. No bullets, no fluff.`,
+    { maxOutputTokens: 900, temperature: 0.25 }
   );
 }
 

@@ -95,10 +95,8 @@ export async function runFactCheckPipeline(documentId: string) {
     return { ...report, executiveSummary: "No verifiable claims found.", strictReport: null };
   }
 
-  // ── STEP 4: Verify each claim (fault-tolerant) ───────────────────────────
-  const claimResults = [];
-
-  for (const c of extracted) {
+  // ── STEP 4: Verify each claim (parallelized) ───────────────────────────
+  const claimPromises = extracted.map(async (c) => {
     try {
       const claim = await prisma.claim.create({
         data: {
@@ -110,19 +108,19 @@ export async function runFactCheckPipeline(documentId: string) {
         },
       });
 
-      // Search for evidence
+      // Search for evidence in parallel
       const queries = generateSearchQueries(c.claim);
-      const allEvidence = [];
-
-      for (const q of queries) {
+      const searchPromises = queries.map(async (q) => {
         try {
-          const results = await searchWeb(q, 4);
-          allEvidence.push(...results);
+          return await searchWeb(q, 4);
         } catch (searchErr) {
           console.warn(`Search failed for query "${q}":`, searchErr);
-          // Continue without this search result
+          return [];
         }
-      }
+      });
+
+      const searchResults = await Promise.all(searchPromises);
+      const allEvidence = searchResults.flat();
 
       const uniqueEvidence = dedupeEvidence(allEvidence)
         .sort((a, b) => b.relevanceScore - a.relevanceScore)
@@ -149,9 +147,9 @@ export async function runFactCheckPipeline(documentId: string) {
         },
       });
 
-      // Store evidence sources
-      for (const ev of uniqueEvidence) {
-        await prisma.evidenceSource.create({
+      // Store evidence sources in parallel
+      const evidencePromises = uniqueEvidence.map((ev) =>
+        prisma.evidenceSource.create({
           data: {
             verificationResultId: vr.id,
             title: ev.title || "Source",
@@ -161,15 +159,18 @@ export async function runFactCheckPipeline(documentId: string) {
             relevanceScore: ev.relevanceScore,
             publishedAt: ev.publishedAt,
           },
-        });
-      }
+        })
+      );
+      await Promise.all(evidencePromises);
 
-      claimResults.push({ claimId: claim.id, status: vr.status });
+      return { claimId: claim.id, status: vr.status };
     } catch (claimErr) {
-      // Log but don't crash the whole pipeline
       console.error(`Failed to process claim "${c.claim.slice(0, 60)}":`, claimErr);
+      return null;
     }
-  }
+  });
+
+  await Promise.all(claimPromises);
 
   // ── STEP 5: Generate report ──────────────────────────────────────────────
   const report = await buildReport(documentId);
@@ -447,19 +448,19 @@ function normalizeStatus(status: string): VerificationStatus {
  * No longer applies a strict numeric filter — trusts AI extraction quality.
  */
 async function extractClaimsAcrossChunks(text: string) {
-  // Process first 6 chunks max (to stay within time limits)
-  const chunks = chunkText(text, 9000).slice(0, 6);
-  const merged: Awaited<ReturnType<typeof extractClaims>> = [];
-
-  for (const chunk of chunks) {
+  // Process first 3 chunks max (to stay within time limits)
+  const chunks = chunkText(text, 9000).slice(0, 3);
+  const chunkPromises = chunks.map(async (chunk) => {
     try {
-      const claims = await extractClaims(chunk);
-      merged.push(...claims);
+      return await extractClaims(chunk);
     } catch (err) {
       console.warn("Claim extraction failed for chunk:", err);
-      // Continue with other chunks
+      return [];
     }
-  }
+  });
+
+  const results = await Promise.all(chunkPromises);
+  const merged = results.flat();
 
   // Deduplicate claims by normalized text
   const seen = new Set<string>();
@@ -476,7 +477,7 @@ async function extractClaimsAcrossChunks(text: string) {
       seen.add(key);
       return true;
     })
-    .slice(0, 20); // Cap at 20 claims to stay within timeout
+    .slice(0, 10); // Cap at 10 claims to stay within timeout
 }
 
 function dedupeEvidence<T extends { url: string }>(items: T[]): T[] {

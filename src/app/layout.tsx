@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, IBM_Plex_Mono, Fraunces } from "next/font/google";
+import { KenzoLoader } from "@/components/layout/kenzo-loader";
 import "./globals.css";
 
 const sansFont = Space_Grotesk({
@@ -58,6 +59,7 @@ export default function RootLayout({
         className={`${sansFont.variable} ${monoFont.variable} ${serifFont.variable} font-sans antialiased`}
       >
         {children}
+        <KenzoLoader />
       </body>
     </html>
   );

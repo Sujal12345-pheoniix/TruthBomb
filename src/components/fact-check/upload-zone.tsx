@@ -47,6 +47,7 @@ export function UploadZone({ onUploaded }: UploadZoneProps) {
 
   return (
     <div
+      id="pdf-upload-zone"
       {...getRootProps()}
       className={cn(
         "cursor-pointer rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-200 section-shell",

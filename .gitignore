@@ -47,3 +47,6 @@ next-env.d.ts
 
 # prisma
 prisma/migrations
+
+# runtime local db
+/scratch/*.json

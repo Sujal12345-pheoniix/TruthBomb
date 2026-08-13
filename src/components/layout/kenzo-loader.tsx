@@ -9,7 +9,7 @@ export function KenzoLoader() {
       if (!existing) {
         const script = document.createElement('script');
         script.src = 'https://kenzo-dap.onrender.com/sdk.js';
-        script.dataset.kenzoKey = 'kenzo_project_dev_api_key_2026';
+        script.dataset.kenzoKey = 'kz_live_tb_8f93a102';
         script.dataset.apiBase = 'https://kenzo-dap.onrender.com/api/v1';
         script.async = true;
         document.body.appendChild(script);

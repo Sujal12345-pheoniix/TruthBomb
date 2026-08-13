@@ -12,6 +12,8 @@ export function KenzoLoader() {
   return (
     <Script
       src="https://kenzo-dap.onrender.com/sdk.js"
+      data-kenzo-key="kenzo_project_dev_api_key_2026"
+      data-api-base="https://kenzo-dap.onrender.com/api/v1"
       strategy="afterInteractive"
       onLoad={() => {
         if (typeof window !== "undefined") {
